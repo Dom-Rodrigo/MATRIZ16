@@ -266,6 +266,7 @@ int main() {
         if (caracter_press == '7' || buffer[0] == '7') {
             ligar_leds_em_sequencia();
             beep(BUZZER_PIN, 2000);
+            apagar_leds();
         
 
         busy_wait_us(500000);
