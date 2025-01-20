@@ -50,7 +50,7 @@ absolute_time_t blink_timer;
 bool blink_enabled = false;
 // uint32_t all_columns_mask = 0x0;
 uint column_mask[4];
-bool use_microphone = true;
+bool use_microphone = false;
 
 
 
@@ -288,88 +288,93 @@ int main()
     pwm_init_buzzer(BUZZER_PIN);
 
 
-    if (use_uart == 0)
-    {
-        caracter_press = pico_keypad_get_key();
-        printf("\nTecla pressionada: %c\n", caracter_press);
-    }
-    else
-    {
-        scanf("%4s", buffer);
-        printf("\nTecla pressionada: %s\n", buffer);
-    }
-
-    // Avaliação de caractere para o LED
-    if (caracter_press == 'B' || buffer[0] == 'B')
-    {
-        beep(BUZZER_PIN, 1000); // Bipe de 500ms
-        gpio_put(GPIO_LED, true);
-    }
-    else
-    {
-        gpio_put(GPIO_LED, false);
-    }
-    if (caracter_press == 'A' || caracter_press == 'a' || buffer[0] == 'a' || buffer[0] == 'A')
-    { // Verifica se a tecla pressionada é "A" ou "a"
-        printf("Tecla 'A' pressionada! Acendendo luz branca...\n");
-        acender_branco(); // Acende os LEDs
-        sleep_ms(5000);   // Fica aceso por 5 segundos
-        apagar_leds();    // Apaga os LEDs após o intervalo
-    }
-    if (caracter_press == '7' || buffer[0] == '7') {
-        ligar_leds_em_sequencia();
-        beep(BUZZER_PIN, 2000);
-        apagar_leds();
-    }
-    if (use_microphone == true)
-    {
-
-        adc_value = read_mic();
-
-        if (adc_value > THRESHOLD)
+    while (true) {
+        if (use_uart == 0)
         {
-            blink_enabled = true;
-            gpio_put(GPIO_LED, true);
-            blink_timer = delayed_by_ms(get_absolute_time(), BLINK_PERIOD);
+            caracter_press = pico_keypad_get_key();
+            printf("\nTecla pressionada: %c\n", caracter_press);
+        }
+        else
+        {
+            scanf("%4s", buffer);
+            printf("\nTecla pressionada: %s\n", buffer);
         }
 
-        if (blink_enabled == true)
+        // Avaliação de caractere para o LED
+        if (caracter_press == 'B' || buffer[0] == 'B')
+        {
+            beep(BUZZER_PIN, 1000); // Bipe de 500ms
+            gpio_put(GPIO_LED, true);
+        }
+
+        if (caracter_press == 'A' || caracter_press == 'a' || buffer[0] == 'a' || buffer[0] == 'A')
+        { // Verifica se a tecla pressionada é "A" ou "a"
+            printf("Tecla 'A' pressionada! Acendendo luz branca...\n");
+            apagar_leds();  
+            acender_branco(); // Acende os LEDs
+            sleep_ms(5000);   // Fica aceso por 5 segundos
+            apagar_leds();    // Apaga os LEDs após o intervalo
+        }
+
+
+        if (caracter_press == '7' || buffer[0] == '7') {
+            apagar_leds();  
+            ligar_leds_em_sequencia();
+            beep(BUZZER_PIN, 2000);
+            apagar_leds();
+        }
+
+        if (use_microphone == true)
         {
 
-            if (time_reached(blink_timer))
+            adc_value = read_mic();
+
+            if (adc_value > THRESHOLD)
             {
-                led_state = !led_state;
-                gpio_put(GPIO_LED, led_state);
+                blink_enabled = true;
+                gpio_put(GPIO_LED, true);
                 blink_timer = delayed_by_ms(get_absolute_time(), BLINK_PERIOD);
+            }
+
+            if (blink_enabled == true)
+            {
+
+                if (time_reached(blink_timer))
+                {
+                    led_state = !led_state;
+                    gpio_put(GPIO_LED, led_state);
+                    blink_timer = delayed_by_ms(get_absolute_time(), BLINK_PERIOD);
+                }
+            }
+
+            busy_wait_us(SAMPLING_TIME_US);
+        }
+
+        if (pico_keypad_get_key() == '#'|| buffer[0] == '#') {
+
+            printf("Tecla '#' acionada! Sirene ativa\n");
+
+            
+            for (int i = 0; i < 5; i++) { // Repete a sirene 5 vezes
+                acender_vermelho(); 
+                beep(BUZZER_PIN, 400); 
+                sleep_ms(400);
+                apagar_leds();
+
+                acender_azul(); 
+                beep(BUZZER_PIN, 400);
+                sleep_ms(400);
+                apagar_leds();
+
+                acender_branco(); 
+                beep(BUZZER_PIN, 400);
+                sleep_ms(400);
+                apagar_leds();
             }
         }
 
-        busy_wait_us(SAMPLING_TIME_US);
+        busy_wait_us(500000);
     }
 
-    if (pico_keypad_get_key() == '#') {
 
-        printf("Tecla '#' acionada! Sirene ativa\n");
-
-        
-        for (int i = 0; i < 5; i++) { // Repete a sirene 5 vezes
-            acender_vermelho(); 
-            beep(BUZZER_PIN, 400); 
-            sleep_ms(400);
-            apagar_leds();
-
-            acender_azul(); 
-            beep(BUZZER_PIN, 400);
-            sleep_ms(400);
-            apagar_leds();
-
-            acender_branco(); 
-            beep(BUZZER_PIN, 400);
-            sleep_ms(400);
-            apagar_leds();
-    }
-    }
-
-    
-    busy_wait_us(500000);
 }
