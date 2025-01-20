@@ -223,6 +223,18 @@ void beep(uint pin, uint duration_ms)
     sleep_ms(100); // Pausa de 100ms
 }
 
+void ligar_leds_em_sequencia() {
+    gpio_put(LED_VERDE, true);
+    sleep_ms(1500);
+    gpio_put(LED_VERDE, false);
+    gpio_put(LED_AZUL, true);
+    sleep_ms(1500);
+    gpio_put(LED_AZUL, false);
+    gpio_put(LED_VERMELHO, true);
+    sleep_ms(1500);
+    gpio_put(LED_VERMELHO, false);
+}
+
 // convert ADC to voltage value
 float adc_to_voltage()
 {
@@ -298,7 +310,11 @@ int main()
         sleep_ms(5000);   // Fica aceso por 5 segundos
         apagar_leds();    // Apaga os LEDs após o intervalo
     }
-
+    if (caracter_press == '7' || buffer[0] == '7') {
+        ligar_leds_em_sequencia();
+        beep(BUZZER_PIN, 2000);
+        apagar_leds();
+    }
     if (use_microphone == true)
     {
 
